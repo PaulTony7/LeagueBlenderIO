@@ -37,9 +37,9 @@ class ImportSKN(Operator, ImportHelper):
         from .io.skn_io_imp import sknImporter, ImportError
 
         try:
-            skn_importer = sknImporter(self.filepath)
-            skn_importer.read()
-            
+            with open(self.filepath):
+                skn_importer = sknImporter(self.filepath)
+                skn_importer.read()
             return {'FINISHED'}
         except ImportError as e:
             self.report({'ERROR'}, e.args[0])

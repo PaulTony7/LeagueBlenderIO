@@ -1,3 +1,5 @@
 addons/blender-debugger-for-vscode/
 *.pyc
 */__pycache__
+.vscode
+test
