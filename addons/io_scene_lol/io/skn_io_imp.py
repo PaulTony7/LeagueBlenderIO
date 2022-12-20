@@ -269,34 +269,73 @@ class sknImporter():
         edges = []
         faces = []
         for i in range(int(len(skn.indices) / 3)):
-            faces.append((skn.indices[i*3],skn.indices[i*3+1],skn.indices[i*3+2]))
-
-        new_mesh = bpy.data.meshes.new(basename(self.filename))
+            # Use correct blender face orientation 
+            faces.append((skn.indices[i*3+1],skn.indices[i*3],skn.indices[i*3+2]))
+        name = basename(splitext(self.filename)[0])
+        new_mesh = bpy.data.meshes.new(name)
         new_mesh.from_pydata(vertices, edges, faces)
+        # Set normals
+        normalList = []
+        for i in range(len(skn.vertices)):
+            vertex = skn.vertices[i]
+            normalList.append(mathutils.Vector(tuple(vertex.normal)))
+        new_mesh.normals_split_custom_set_from_vertices(normalList)
+        new_mesh.use_auto_smooth = True
+        new_mesh.calc_normals_split()
         new_mesh.update()
+        new_mesh.use_auto_smooth = False
+        
 
         # Create object
-        new_object = bpy.data.objects.new(basename(self.filename), new_mesh)
+        new_object = bpy.data.objects.new(name, new_mesh)
+
+        # Set UV's
+        new_object.data.uv_layers.new(name='lolUVTexture')
+        uv_layer = new_object.data.uv_layers[-1].data
+        uv_set = []
+        for k, loop in enumerate(new_object.data.loops):
+            v = loop.vertex_index
+            uv_set.append(skn.vertices[v].uv[0])
+            # flipped V
+            uv_set.append(1 - skn.vertices[v].uv[1])
+        uv_layer.foreach_set('uv', uv_set)
+
+        # # Set normals
+        # normalList = []
+        # for i in range(len(skn.vertices)):
+        #     vertex = skn.vertices[i]
+        #     # normalList.append(-vertex.normal.x)
+        #     # normalList.append(-vertex.normal.y)
+        #     # normalList.append(-vertex.normal.z)
+        #     normalList.append(1)
+        #     normalList.append(0)
+        #     normalList.append(0)
+        # new_object.data.vertices.foreach_set('normal', normalList)
 
         # Create materials and assign faces to materials
         for i in range(len(skn.meshes)):
             new_material = bpy.data.materials.new(skn.meshes[i].name)
+            new_material.use_nodes = True
+            bsdf = new_material.node_tree.nodes['Principled BSDF']
+            textureImage = new_material.node_tree.nodes.new('ShaderNodeTexImage')
+            new_material.node_tree.links.new(bsdf.inputs['Base Color'], textureImage.outputs['Color'])
+
             new_mesh.materials.append(new_material)
             for j in range(len(faces)):
                 if faces[j][0] >= skn.meshes[i].vtx_start and faces[j][0] < skn.meshes[i].vtx_start + skn.meshes[i].vtx_count:
                     new_object.data.polygons[j].material_index = i
 
         # create vertex groups
-        for i in range(len(skl.joints)):
-            new_object.vertex_groups.new(name=skl.joints[i].name)
+        for i in range(len(skl.influences)):
+            new_object.vertex_groups.new(name=skl.joints[skl.influences[i]].name)
 
         # bone influence
         for i in range(len(skn.vertices)):
             vertex = skn.vertices[i]
-            new_object.vertex_groups[skl.influences[vertex.blend_indices[0]]].add([i], vertex.blend_weights[0], 'ADD')
-            new_object.vertex_groups[skl.influences[vertex.blend_indices[1]]].add([i], vertex.blend_weights[1], 'ADD')
-            new_object.vertex_groups[skl.influences[vertex.blend_indices[2]]].add([i], vertex.blend_weights[2], 'ADD')
-            new_object.vertex_groups[skl.influences[vertex.blend_indices[3]]].add([i], vertex.blend_weights[3], 'ADD')
+            new_object.vertex_groups[vertex.blend_indices[0]].add([i], vertex.blend_weights[0], 'ADD')
+            new_object.vertex_groups[vertex.blend_indices[1]].add([i], vertex.blend_weights[1], 'ADD')
+            new_object.vertex_groups[vertex.blend_indices[2]].add([i], vertex.blend_weights[2], 'ADD')
+            new_object.vertex_groups[vertex.blend_indices[3]].add([i], vertex.blend_weights[3], 'ADD')
 
         # make collection
         new_collection = bpy.data.collections.new('new_collection')
