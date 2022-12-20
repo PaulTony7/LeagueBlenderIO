@@ -259,10 +259,16 @@ class sknImporter():
         with open(self.filename, 'rb') as file:
             skn = LoLSKN.read(file)
 
-        # Load Skeleton
+        skl_file = splitext(self.filename)[0]+'.skl'
         print(splitext(self.filename)[0]+'.skl')
-        with open(splitext(self.filename)[0]+'.skl', 'rb') as file2:
-            skl = LoLSKL.read(file2)
+        if isfile(skl_file):
+            # Load Skeleton
+            mesh_only = False
+            with open(splitext(self.filename)[0]+'.skl', 'rb') as file2:
+                skl = LoLSKL.read(file2)
+        else:
+            mesh_only = True
+            print('Couldn find', splitext(self.filename)[0]+'.skl')
         
         # Create mesh
         vertices = [tuple(t.position) for t in skn.vertices]
@@ -285,7 +291,6 @@ class sknImporter():
         new_mesh.update()
         new_mesh.use_auto_smooth = False
         
-
         # Create object
         new_object = bpy.data.objects.new(name, new_mesh)
 
@@ -300,18 +305,6 @@ class sknImporter():
             uv_set.append(1 - skn.vertices[v].uv[1])
         uv_layer.foreach_set('uv', uv_set)
 
-        # # Set normals
-        # normalList = []
-        # for i in range(len(skn.vertices)):
-        #     vertex = skn.vertices[i]
-        #     # normalList.append(-vertex.normal.x)
-        #     # normalList.append(-vertex.normal.y)
-        #     # normalList.append(-vertex.normal.z)
-        #     normalList.append(1)
-        #     normalList.append(0)
-        #     normalList.append(0)
-        # new_object.data.vertices.foreach_set('normal', normalList)
-
         # Create materials and assign faces to materials
         for i in range(len(skn.meshes)):
             new_material = bpy.data.materials.new(skn.meshes[i].name)
@@ -325,17 +318,18 @@ class sknImporter():
                 if faces[j][0] >= skn.meshes[i].vtx_start and faces[j][0] < skn.meshes[i].vtx_start + skn.meshes[i].vtx_count:
                     new_object.data.polygons[j].material_index = i
 
-        # create vertex groups
-        for i in range(len(skl.influences)):
-            new_object.vertex_groups.new(name=skl.joints[skl.influences[i]].name)
+        if not mesh_only:
+            # create vertex groups
+            for i in range(len(skl.influences)):
+                new_object.vertex_groups.new(name=skl.joints[skl.influences[i]].name)
 
-        # bone influence
-        for i in range(len(skn.vertices)):
-            vertex = skn.vertices[i]
-            new_object.vertex_groups[vertex.blend_indices[0]].add([i], vertex.blend_weights[0], 'ADD')
-            new_object.vertex_groups[vertex.blend_indices[1]].add([i], vertex.blend_weights[1], 'ADD')
-            new_object.vertex_groups[vertex.blend_indices[2]].add([i], vertex.blend_weights[2], 'ADD')
-            new_object.vertex_groups[vertex.blend_indices[3]].add([i], vertex.blend_weights[3], 'ADD')
+            # bone influence
+            for i in range(len(skn.vertices)):
+                vertex = skn.vertices[i]
+                new_object.vertex_groups[vertex.blend_indices[0]].add([i], vertex.blend_weights[0], 'ADD')
+                new_object.vertex_groups[vertex.blend_indices[1]].add([i], vertex.blend_weights[1], 'ADD')
+                new_object.vertex_groups[vertex.blend_indices[2]].add([i], vertex.blend_weights[2], 'ADD')
+                new_object.vertex_groups[vertex.blend_indices[3]].add([i], vertex.blend_weights[3], 'ADD')
 
         # make collection
         new_collection = bpy.data.collections.new('new_collection')
