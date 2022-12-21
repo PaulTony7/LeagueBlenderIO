@@ -2,21 +2,27 @@ from __future__ import annotations
 from typing import Any, NamedTuple, List, Optional, Tuple, IO
 from struct import Struct
 import math
+from mathutils import Vector, Quaternion
 
 class LoLVec2(NamedTuple):
     x: float = 0.0
     y: float = 0.0
-
+    def to_blender(self) -> Vector:
+        return Vector((self.x, self.y))
 class LoLVec3(NamedTuple):
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
+    def to_blender(self) -> Vector:
+        return Vector((self.x, -self.z, self.y))
 
 class LoLVec4(NamedTuple):
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
     w: float = 0.0
+    def to_blender(self) -> Vector:
+        return Vector((self.x, -self.z, self.y, self.w))
 
 class LoLQuat(NamedTuple):
     x: float = 0.0
@@ -24,15 +30,22 @@ class LoLQuat(NamedTuple):
     z: float = 0.0
     w: float = 0.0
 
+    def to_blender(self) -> Quaternion:
+        return Quaternion((self.w, self.x, -self.z, self.y))
     def normalize(self) -> LoLQuat:
         n = math.sqrt(self.w ** 2 + self.x ** 2  + self.y ** 2 + self.z ** 2)
         return LoLQuat(self.x / n, self.y / n, self.z / n, self.w / n)
+    @staticmethod
+    def from_blender(quat:Quaternion) -> LoLQuat:
+        return LoLQuat(x = quat.x, y = quat.y, z = quat.z, w = quat.w)
 
 class LoLColor(NamedTuple):
     r: float = 0.0
     g: float = 0.0
     b: float = 0.0
     a: float = 0.0
+    def to_blender(self) -> Vector:
+        return Vector(tuple(self))
 
 class LoLBox(NamedTuple):
     start: LoLVec3
@@ -176,8 +189,8 @@ class LoLIO(NamedTuple):
 
     def read_vec3(self) -> LoLVec3:
         x = self.read_f32()
-        z = self.read_f32()
         y = self.read_f32()
+        z = self.read_f32()
         return LoLVec3(x, y, z)
 
     def write_vec3(self, v: LoLVec3):

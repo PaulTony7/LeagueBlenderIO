@@ -9,7 +9,7 @@ class LoLSKL(NamedTuple):
         parent_idx: int
         name_hash: int
         radius: float
-        parent_transform: LoLForm3D
+        local_transform: LoLForm3D
         inv_root_transform: LoLForm3D
         name: str = ""
         flags: int = 0
@@ -67,7 +67,7 @@ class LoLSKL(NamedTuple):
                     joint_pad = rw.read_u16()
                     joint_name_hash = rw.read_u32()
                     joint_radius = rw.read_f32()
-                    joint_parent_transform = rw.read_form3d()
+                    joint_local_transform = rw.read_form3d()
                     joint_inv_root_transform = rw.read_form3d()
                     joint_off_name = rw.read_ptr(None)
                     joint_name = ""
@@ -79,7 +79,7 @@ class LoLSKL(NamedTuple):
                         parent_idx = joint_parent_idx,
                         name_hash = joint_name_hash,
                         radius = joint_radius,
-                        parent_transform = joint_parent_transform,
+                        local_transform = joint_local_transform,
                         inv_root_transform = joint_inv_root_transform,
                         name = joint_name,
                     )
@@ -162,7 +162,7 @@ class LoLSKL(NamedTuple):
                     rw.write_u16(0) # PAD
                     rw.write_u32(joint.name_hash)
                     rw.write_f32(joint.radius)
-                    rw.write_form3d(joint.parent_transform)
+                    rw.write_form3d(joint.local_transform)
                     rw.write_form3d(joint.inv_root_transform)
                     rw.write_ptr(joint_off_name_by_idx[idx], None)
 

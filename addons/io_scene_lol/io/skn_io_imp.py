@@ -6,7 +6,6 @@ from os.path import isfile, splitext, basename
 from typing import NamedTuple, List, Optional, Tuple, IO
 
 import bpy
-import bmesh
 
 from ..helper.io_helper import *
 from .skl_io_imp import LoLSKL
@@ -271,7 +270,8 @@ class sknImporter():
             print('Couldn find', splitext(self.filename)[0]+'.skl')
         
         # Create mesh
-        vertices = [tuple(t.position) for t in skn.vertices]
+        # Use correct blender axis order
+        vertices = [(t.position.x, -t.position.z, t.position.y) for t in skn.vertices]
         edges = []
         faces = []
         for i in range(int(len(skn.indices) / 3)):
@@ -337,60 +337,43 @@ class sknImporter():
         # add object to scene collection
         new_collection.objects.link(new_object)
 
+        # Create Armature
 
-        # # Create Armature
-        # bpy.ops.object.armature_add(location=(0, 0, 0), enter_editmode=True)
-        # obj = bpy.context.active_object
-        # armature = obj.data
+        bpy.ops.object.armature_add(location=(0, 0, 0), enter_editmode=True)
+        obj = bpy.context.active_object
+        armature = obj.data
 
-        # bones = armature.edit_bones
-
-        # bones.remove(bones[0])
-
-        # for i in range(skl.jointCount):
-        #     bone = skl.joints[i]
-        #     boneParentID = bone.ParentID
-
-        #     parentPos = mathutils.Vector([0,0,0])
-        #     boneHead = bone.localTranslation
+        # calc bone matrices
+        editbone_arm_mats = []
+        for i in range(len(skl.joints)):
+            bone = skl.joints[i]
+            if bone.parent_idx > -1:
+                parent_editbone_mat = editbone_arm_mats[bone.parent_idx]
+            else:
+                parent_editbone_mat = mathutils.Matrix.Identity(4)
             
-        #     newBone = armature.edit_bones.new(bone.Name)
+            t, r = bone.local_transform.pos.to_blender(), bone.local_transform.rot.to_blender()
+            local_to_parent = mathutils.Matrix.Translation(t) @ mathutils.Quaternion(r).to_matrix().to_4x4()
+            editbone_arm_mats.append(parent_editbone_mat @ local_to_parent)
 
-        #     if boneParentID >= 0 and boneParentID < skl.jointCount:
-        #         parentName = skl.joints[boneParentID].Name
-        #         parentBone = armature.edit_bones[parentName]
+        for i in range(len(skl.joints)):
+            bone = skl.joints[i]
+            editbone = armature.edit_bones.new(bone.name)
+            editbone.use_connect = False
+
+            arma_mat = editbone_arm_mats[i]
+            editbone.head = arma_mat @ mathutils.Vector((0,0,0))
+            editbone.tail = arma_mat @ mathutils.Vector((0,1,0))
+            # editbone.length = bone.radius
+            editbone.align_roll(arma_mat @ mathutils.Vector((0, 0, 1)) - editbone.head)
+        
+        # set all bone parents
+        for i in range(len(skl.joints)):
+            bone = skl.joints[i]
+            if bone.parent_idx >= 0:
+                parent_bone = skl.joints[bone.parent_idx]
+                editbone = armature.edit_bones[bone.name]
+                parent_editbone = armature.edit_bones[parent_bone.name]
+                editbone.parent = parent_editbone
                 
-        #         newBone.parent = parentBone
-        #         parentRotation = skl.joints[boneParentID].localRotation
-        #         boneHead.rotate(parentRotation)
-        #         bone.localRotation = parentRotation * bone.localRotation
-
-        #         parentPos = parentBone.head
-
-        #     newBone.head = parentPos + boneHead
-
-        #     if newBone.length == 0:
-        #         newBone.tail[1] += .001 
-                
-        # for bone in armature.edit_bones:
-        #     if bone.length == 0:
-        #         bone.length = 1
-        #     if len(bone.children) == 0:
-        #         bone.length = 10
-        #         if bone.parent:
-        #             if bone.parent.tail != bone.head:
-        #                 bone.tail = bone.head
-        #                 bone.head = bone.parent.tail
-        #             else:
-        #                 bone.align_orientation(bone.parent)
-        #     else:
-
-        #         numChildren = len(bone.children)
-        #         pos = mathutils.Vector((0, 0, 0))
-        #         for child in bone.children:
-        #             if child.name.isupper() or child.name.lower().count('buffbone'):
-        #                 pos = child.head
-        #                 break
-        #             pos += child.head/numChildren
-        #         bone.tail = pos
-        # bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
