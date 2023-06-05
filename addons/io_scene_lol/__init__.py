@@ -34,7 +34,7 @@ class ImportSKN(Operator, ImportHelper):
 
     def import_skn(self, context):
         import time
-        from .io.skn_io_imp import sknImporter, ImportError
+        from .io.importer import sknImporter, ImportError
 
         try:
             with open(self.filepath):

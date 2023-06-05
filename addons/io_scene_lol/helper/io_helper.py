@@ -9,6 +9,7 @@ class LoLVec2(NamedTuple):
     y: float = 0.0
     def to_blender(self) -> Vector:
         return Vector((self.x, self.y))
+
 class LoLVec3(NamedTuple):
     x: float = 0.0
     y: float = 0.0
