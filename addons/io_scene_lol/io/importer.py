@@ -4,6 +4,7 @@ import bpy;
 from os.path import isfile, splitext, basename
 from .skn_io_imp import LoLSKN
 from .skl_io_imp import LoLSKL
+from .anm_io_imp import LoLANM
 
 class ImportError(RuntimeError()):
     pass
@@ -37,6 +38,14 @@ class sknImporter():
             mesh_only = True
             print('Couldn find', splitext(self.filename)[0]+'.skl')
         
+        # TODO: change to multuple not hardcoded animation files
+        # TEST READ ANIMATION
+        print('Reading animation file')
+        with open('C:\\Users\\kokot.p\\Desktop\\LeagueBlenderIO-main\\res\\aatrox_attack1.anm', 'rb') as file3:
+            anm = LoLANM.read(file3)
+            print(anm.asset_name)
+
+        # TODO: Refactor to a different class
         # Create mesh
         # Use correct blender axis order
         vertices = [(t.position.x, -t.position.z, t.position.y) for t in skn.vertices]

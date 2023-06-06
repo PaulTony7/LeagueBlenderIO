@@ -2,7 +2,7 @@ bl_info = {
     'name': 'SKN 4.1 format',
     'author': 'Paul Kokot',
     'version': (0, 0, 1),
-    'blender': (3, 3, 0),
+    'blender': (3, 5, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as SKN',
     'category': 'Import-Export'
@@ -32,15 +32,16 @@ class ImportSKN(Operator, ImportHelper):
     def execute(self, context):
         return self.import_skn(context)
 
-    def import_skn(self, context):
-        import time
+    def import_skn(self, _):
         from .io.importer import sknImporter, ImportError
 
         try:
             with open(self.filepath):
+                # Change so it can recognize multiple files and distinguish their types
                 skn_importer = sknImporter(self.filepath)
                 skn_importer.read()
             return {'FINISHED'}
+        
         except ImportError as e:
             self.report({'ERROR'}, e.args[0])
             return {'CANCELLED'}
