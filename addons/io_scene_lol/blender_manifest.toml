@@ -1,0 +1,15 @@
+schema_version = "1.0.0"
+
+id = "skn_importer"
+tagline = "Import/Export extension"
+type = "add-on"
+license = ["MIT"]
+name = "SKN 4.1 format"
+maintainer = "Paul Kokot"
+
+version = "0.0.1"
+blender_version_min = "3.5.0"
+
+# 'location': 'File > Import-Export',
+# 'description': 'Import-Export as SKN',
+# 'category': 'Import-Export'

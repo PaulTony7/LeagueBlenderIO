@@ -1,13 +1,3 @@
-bl_info = {
-    'name': 'SKN 4.1 format',
-    'author': 'Paul Kokot',
-    'version': (0, 0, 1),
-    'blender': (3, 5, 0),
-    'location': 'File > Import-Export',
-    'description': 'Import-Export as SKN',
-    'category': 'Import-Export'
-}
-
 import bpy;
 from bpy.types import Operator;
 from bpy_extras.io_utils import ImportHelper, ExportHelper
