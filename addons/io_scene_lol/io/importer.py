@@ -6,7 +6,7 @@ from .skn_io_imp import LoLSKN
 from .skl_io_imp import LoLSKL
 # from .anm_io_imp import LoLANM
 
-class ImportError(RuntimeError()):
+class ImportError(RuntimeError):
     pass
 
 #TODO: rewrite to another file 
@@ -23,6 +23,7 @@ class sknImporter():
         if not isfile(self.filename):
             raise ImportError('Please select a file')
 
+        print('loading', self.filename)
         # Load Mesh
         with open(self.filename, 'rb') as file:
             skn = LoLSKN.read(file)
@@ -38,7 +39,7 @@ class sknImporter():
             mesh_only = True
             print('Couldn find', splitext(self.filename)[0]+'.skl')
         
-        # TODO: change to multuple not hardcoded animation files
+        # TODO: change to multiple not hardcoded animation files
         # TEST READ ANIMATION
         # print('Reading animation file')
         # with open('C:\\Users\\kokot.p\\Desktop\\LeagueBlenderIO-main\\res\\aatrox_attack1.anm', 'rb') as file3:
@@ -109,10 +110,10 @@ class sknImporter():
         #         new_object.vertex_groups[vertex.blend_indices[3]].add([i], vertex.blend_weights[3], 'ADD')
         #
         # # make collection
-        # new_collection = bpy.data.collections.new('new_collection')
-        # bpy.context.scene.collection.children.link(new_collection)
-        # # add object to scene collection
-        # new_collection.objects.link(new_object)
+        new_collection = bpy.data.collections.new('new_collection')
+        bpy.context.scene.collection.children.link(new_collection)
+        # add object to scene collection
+        new_collection.objects.link(new_object)
         #
         # # Create Armature
         #

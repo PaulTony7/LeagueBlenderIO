@@ -6,13 +6,28 @@ class ExportSKN(Operator, ExportHelper):
     """Export scene as SKN file"""
     bl_idname = 'export_scene.skn'
     bl_label = 'Export SKN'
+    bl_options = {'REGISTER', 'UNDO'}
+    filename_ext = ''
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+    def execute(self, context):
+        return self.export_skn(context)
+    
+    def export_skn(self, _):
+        print('Not implemented yet')
+        
 
 class ImportSKN(Operator, ImportHelper): 
     """Import a SKN file"""
     bl_idname = 'import_scene.skn'
     bl_label = 'Import SKN'
     bl_options = {'REGISTER', 'UNDO'}
-
+    
     def draw(self, context):
         layout = self.layout
         
@@ -39,14 +54,19 @@ class ImportSKN(Operator, ImportHelper):
 def menu_func_import(self, context):
     self.layout.operator(ImportSKN.bl_idname, text='SKN 4.1 (.skn)')
 
+def menu_func_export(self, context):
+    self.layout.operator(ExportSKN.bl_idname, text='SKN 4.1 (.skn)')
+
 def register():
     bpy.utils.register_class(ExportSKN)
     bpy.utils.register_class(ImportSKN)
 
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 def unregister():
     bpy.utils.unregister_class(ExportSKN)
     bpy.utils.unregister_class(ImportSKN)
 
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
