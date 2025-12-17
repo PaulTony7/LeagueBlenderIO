@@ -70,13 +70,13 @@ class sknImporter():
         new_mesh.shade_flat()
         
         # Create object
-        new_object = bpy.data.objects.new(name, new_mesh)
+        mesh_object = bpy.data.objects.new(name, new_mesh)
 
         # Set UV's
-        new_object.data.uv_layers.new(name='lolUVTexture')
-        uv_layer = new_object.data.uv_layers[-1].data
+        mesh_object.data.uv_layers.new(name='lolUVTexture')
+        uv_layer = mesh_object.data.uv_layers[-1].data
         uv_set = []
-        for k, loop in enumerate(new_object.data.loops):
+        for k, loop in enumerate(mesh_object.data.loops):
             v = loop.vertex_index
             uv_set.append(skn.vertices[v].uv[0])
             # flipped V
@@ -94,26 +94,21 @@ class sknImporter():
             new_mesh.materials.append(new_material)
             for j in range(len(faces)):
                 if faces[j][0] >= skn.meshes[i].vtx_start and faces[j][0] < skn.meshes[i].vtx_start + skn.meshes[i].vtx_count:
-                    new_object.data.polygons[j].material_index = i
+                    mesh_object.data.polygons[j].material_index = i
 
         if not mesh_only:
             # create vertex groups
             for i in range(len(skl.influences)):
-                new_object.vertex_groups.new(name=skl.joints[skl.influences[i]].name)
+                mesh_object.vertex_groups.new(name=skl.joints[skl.influences[i]].name)
 
             # bone influence
             for i in range(len(skn.vertices)):
                 vertex = skn.vertices[i]
-                new_object.vertex_groups[vertex.blend_indices[0]].add([i], vertex.blend_weights[0], 'ADD')
-                new_object.vertex_groups[vertex.blend_indices[1]].add([i], vertex.blend_weights[1], 'ADD')
-                new_object.vertex_groups[vertex.blend_indices[2]].add([i], vertex.blend_weights[2], 'ADD')
-                new_object.vertex_groups[vertex.blend_indices[3]].add([i], vertex.blend_weights[3], 'ADD')
+                mesh_object.vertex_groups[vertex.blend_indices[0]].add([i], vertex.blend_weights[0], 'ADD')
+                mesh_object.vertex_groups[vertex.blend_indices[1]].add([i], vertex.blend_weights[1], 'ADD')
+                mesh_object.vertex_groups[vertex.blend_indices[2]].add([i], vertex.blend_weights[2], 'ADD')
+                mesh_object.vertex_groups[vertex.blend_indices[3]].add([i], vertex.blend_weights[3], 'ADD')
 
-        # make collection
-        new_collection = bpy.data.collections.new(name)
-        bpy.context.scene.collection.children.link(new_collection)
-        # add object to scene collection
-        new_collection.objects.link(new_object)
 
         # Create Armature
 
@@ -158,4 +153,16 @@ class sknImporter():
                 # set the tail to parents base
                 editbone.tail = editbone_arm_mats[bone.parent_idx] @ mathutils.Vector((0,0,0))
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+        # bpy.ops.object.mode_set(mode='OBJECT')
+
+        # link armature to mesh
+        mesh_object.parent = obj
+        # mesh_object.parent_bone = obj.pose.bones[0].name
+        armature_modifier = mesh_object.modifiers.new('armature', type='ARMATURE')
+        armature_modifier.object = obj
+
+        # make collection
+        new_collection = bpy.data.collections.new(name)
+        bpy.context.scene.collection.children.link(new_collection)
+        # add object to scene collection
+        new_collection.objects.link(mesh_object)
