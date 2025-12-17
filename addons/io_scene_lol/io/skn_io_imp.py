@@ -34,12 +34,12 @@ class LoLSKN(NamedTuple):
 
         @staticmethod
         def create(vertices: List[LoLSKN.Vertex], flags: int = 0) -> LoLSKN.Metadata:
-            sx = min(vtx.x for vtx in vertices)
-            sy = min(vtx.y for vtx in vertices)
-            sz = min(vtx.z for vtx in vertices)
-            ex = max(vtx.x for vtx in vertices)
-            ey = max(vtx.y for vtx in vertices)
-            ez = max(vtx.z for vtx in vertices)
+            sx = min(vtx.position.x for vtx in vertices)
+            sy = min(vtx.position.y for vtx in vertices)
+            sz = min(vtx.position.z for vtx in vertices)
+            ex = max(vtx.position.x for vtx in vertices)
+            ey = max(vtx.position.y for vtx in vertices)
+            ez = max(vtx.position.z for vtx in vertices)
             meta_data = LoLSKN.Metadata(
                 bound_box = LoLBox(
                     start = LoLVec3(x = sx, y = sy, z = sz),
